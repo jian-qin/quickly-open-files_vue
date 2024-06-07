@@ -22,7 +22,12 @@ export default class QuicklyOpenFiles {
     this.#router = router
     this.ws = new ReconnectingWebSocket(`ws://${location.hostname}:${port}/`)
     this.#addListener()
-    // Mount the method to the window object for easy access in the console 把方法挂载到 window 对象上，方便在控制台调用
+    this.#mountWindowMethod()
+  }
+  /**
+   * Mount the method to the window object for easy access in the console 把方法挂载到 window 对象上，方便在控制台调用
+   */
+  #mountWindowMethod() {
     // @ts-ignore
     self.__VSCode = {
       openFileByElement: this.openFileByElement,
@@ -87,7 +92,7 @@ export default class QuicklyOpenFiles {
    * @param index number key value 按的数字键值
    * @returns [path, pathList] [路径, 路径列表]
    */
-  openFileByElement(target: Element, index: number = 0) {
+  openFileByElement = (target: Element, index: number = 0) => {
     const vueCtx = domToVueCtx(target)
     const pathList = getPathList(vueCtx)
     this.#printLog(pathList, index)
@@ -117,7 +122,7 @@ export default class QuicklyOpenFiles {
    * Open the vscode file of the page component of the current route 打开当前路由的页面组件的vscode文件
    * @returns Opened file path 打开的文件路径
    */
-  openFileByPage() {
+  openFileByPage = () => {
     const matched = this.#router.currentRoute.value.matched
     // @ts-ignore
     const path: string | undefined = matched[matched.length - 1]?.components?.default?.__file
@@ -133,7 +138,7 @@ export default class QuicklyOpenFiles {
    * Broadcast opening this page (notify other clients to open the current page) 广播打开本页（通知其他客户端打开当前页面）
    * @returns Opened page path 打开的页面路径
    */
-  broadcastOpenPage() {
+  broadcastOpenPage = () => {
     const path = this.#router.currentRoute.value.fullPath
     this.#printLog([path], 0)
     this.ws.send(JSON.stringify({
