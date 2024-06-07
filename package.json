@@ -13,10 +13,10 @@
     "package.json"
   ],
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"no test specified\""
+    "build": "esbuild src/index.ts --bundle --outfile=dist/index.js --sourcemap"
   },
   "dependencies": {
+    "esbuild": "^0.21.4",
     "reconnecting-websocket": "^4.4.0"
   },
   "devDependencies": {
