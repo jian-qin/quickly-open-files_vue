@@ -1,0 +1,41 @@
+{
+  "name": "quickly-open-files_vue",
+  "description": "Dependency of vscode plugin 'Quickly open files'",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "README.zh-CN.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"no test specified\""
+  },
+  "dependencies": {
+    "reconnecting-websocket": "^4.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vue-router": "^4.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jian-qin/quickly-open-files_vue.git"
+  },
+  "keywords": [
+    "vue3",
+    "vscode plugins dependencies",
+    "typescript"
+  ],
+  "author": "jian-qin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jian-qin/quickly-open-files_vue/issues"
+  },
+  "homepage": "https://github.com/jian-qin/quickly-open-files_vue#readme"
+}

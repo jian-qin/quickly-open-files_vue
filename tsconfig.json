@@ -1,0 +1,11 @@
+{
+  "exclude": ["./node_modules/*", "./dist", "**/__tests__/*"],
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "./dist",
+    "declaration": true,
+    "strict": true
+  }
+}
