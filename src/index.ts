@@ -9,17 +9,34 @@ let isInstantiated = false
 export default class QuicklyOpenFiles {
   ws
   #router
+  #rootPath
   #holdKeys = new Set<string>()
+  /**
+   * Format rootPath-import.meta.url 格式化根路径-import.meta.url
+   * @param url import.meta.url
+   */
+  static formatRootPath_importMetaUrl(url: string) {
+    const _url = url.match(/[/|\\](\w+:[/|\\]\w+.+?[/|\\])src[/|\\]/)?.[1]
+    if (!_url) {
+      throw new Error('The root path could not be found.')
+    }
+    return decodeURI(_url)
+  }
   /**
    * @param router vue-router instance vue-router 实例
    * @param port WebSocket port WebSocket 端口
+   * @param rootPath root path 根路径
    */
-  constructor(router: Router, port: number = 4444) {
+  constructor(router: Router, {
+    port = 4444,
+    rootPath = ''
+  } = {}) {
     if (isInstantiated) {
       throw new Error('QuicklyOpenFiles has already been instantiated.')
     }
     isInstantiated = true
     this.#router = router
+    this.#rootPath = rootPath
     this.ws = new ReconnectingWebSocket(`ws://${location.hostname}:${port}/`)
     this.#addListener()
     this.#mountWindowMethod()
@@ -93,11 +110,7 @@ export default class QuicklyOpenFiles {
    * @returns [path, pathList] [路径, 路径列表]
    */
   openFileByElement = (target: Element, index: number = 0) => {
-    const vueCtx = domToVueCtx(target)
-    const pathList = getPathList(vueCtx)
-    this.#printLog(pathList, index)
-    this.#sendOpenFile(pathList[index])
-    function domToVueCtx(dom: any) {
+    const domToVueCtx = (dom: any) => {
       while (dom) {
         const ctx = dom.__vnode?.ctx
         if (ctx) {
@@ -107,15 +120,22 @@ export default class QuicklyOpenFiles {
         }
       }
     }
-    function getPathList(ctx: any) {
+    const getPathList = (ctx: any) => {
       const result: string[] = []
       while (ctx) {
         const path = ctx.type?.__file
-        path && result.push(path)
+        if (path) {
+          const _path = this.#joinRootPath(path)
+          _path && result.push(_path)
+        }
         ctx = ctx.parent
       }
       return result
     }
+    const vueCtx = domToVueCtx(target)
+    const pathList = getPathList(vueCtx)
+    this.#printLog(pathList, index)
+    this.#sendOpenFile(pathList[index])
     return [pathList[index], pathList] as const
   }
   /**
@@ -125,11 +145,12 @@ export default class QuicklyOpenFiles {
   openFileByPage = () => {
     const matched = this.#router.currentRoute.value.matched
     // @ts-ignore
-    const path: string | undefined = matched[matched.length - 1]?.components?.default?.__file
+    let path: string | undefined = matched[matched.length - 1]?.components?.default?.__file
     if (!path) {
       console.log('%cNo file path found.', this.#cssBox('#f56c6c'))
       return
     }
+    path = this.#joinRootPath(path)!
     this.#printLog([path], 0)
     this.#sendOpenFile(path)
     return path
@@ -147,6 +168,22 @@ export default class QuicklyOpenFiles {
       data: path,
     }))
     return path
+  }
+  /**
+   * Join the root path with the url 拼接根路径和url
+   * @param url url to join 要拼接的url
+   */
+  #joinRootPath(url: string) {
+    if (/^[/|\\]?\w+:/.test(url)) {
+      return url
+    }
+    if (!/^[/|\\]?src[/|\\]/.test(url)) {
+      return null
+    }
+    if (['/', '\\'].includes(url[0])) {
+      url = url.slice(1)
+    }
+    return this.#rootPath + url
   }
   /**
    * Send open file message to server 发送打开文件消息到服务器
