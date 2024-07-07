@@ -2,6 +2,8 @@
 
 English | [简体中文](./README.zh-CN.md)
 
+**Note: Not yet compatible with MacOS**
+
 > Dependency of vscode plugin 'Quickly open files'
 
 ## Install vscode plugin

@@ -2,6 +2,8 @@
 
 [English](./README.md) | 简体中文
 
+**注意：暂未兼容MacOS**
+
 > vscode插件 “Quickly open files” 的依赖
 
 ## 安装vscode插件

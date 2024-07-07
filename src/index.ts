@@ -38,8 +38,18 @@ export default class QuicklyOpenFiles {
     this.#router = router
     this.#rootPath = rootPath
     this.ws = new ReconnectingWebSocket(`ws://${location.hostname}:${port}/`)
+    this.#stopReconnect()
     this.#addListener()
     this.#mountWindowMethod()
+  }
+  /**
+   * Determine to stop reconnecting 判断停止重连
+   * @description If the first connection fails, it will not try to connect again later 如果首次连接失败的话，之后就不再尝试连接
+   */
+  #stopReconnect() {
+    const close = () => this.ws.close()
+    this.ws.addEventListener('error', close)
+    this.ws.addEventListener('open', () => this.ws.removeEventListener('error', close))
   }
   /**
    * Mount the method to the window object for easy access in the console 把方法挂载到 window 对象上，方便在控制台调用
