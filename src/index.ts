@@ -8,7 +8,6 @@ let isInstantiated = false
 
 export default class QuicklyOpenFiles {
   ws
-  #router
   #rootPath
   #holdKeys = new Set<string>()
   /**
@@ -23,11 +22,10 @@ export default class QuicklyOpenFiles {
     return decodeURI(_url)
   }
   /**
-   * @param router vue-router instance vue-router 实例
    * @param port WebSocket port WebSocket 端口
    * @param rootPath root path 根路径
    */
-  constructor(router: Router, {
+  constructor({
     port = 4444,
     rootPath = ''
   } = {}) {
@@ -35,7 +33,6 @@ export default class QuicklyOpenFiles {
       throw new Error('QuicklyOpenFiles has already been instantiated.')
     }
     isInstantiated = true
-    this.#router = router
     this.#rootPath = rootPath
     this.ws = new ReconnectingWebSocket(`ws://${location.hostname}:${port}/`)
     this.#stopReconnect()
@@ -67,27 +64,34 @@ export default class QuicklyOpenFiles {
     document.addEventListener('keydown', e => this.#holdKeys.add(e.key))
     document.addEventListener('keyup', e => this.#holdKeys.delete(e.key))
     // Hold alt and click on the element to open the vscode file (the nearest component to which the element belongs) 按住alt点击元素打开vscode文件（元素所属最近的组件）
-    document.addEventListener('click', e => {
-      if (!e.altKey) return
+    const onAlt = (e: MouseEvent) => {
       const index = this.#getKeyIndex('Alt')
       if (index === -1) return
       e.stopImmediatePropagation()
       this.openFileByElement(e.target as Element, index)
-    }, true)
+    }
     // Hold ctrl and click on the page to open the vscode file (the page component of the current route) 按住ctrl点击页面打开vscode文件（当前路由的页面组件）
-    document.addEventListener('click', e => {
-      if (!e.ctrlKey) return
-      if (this.#holdKeys.size !== 1) return
+    const onCtr = (e: MouseEvent) => {
+      const index = this.#getKeyIndex('Ctrl')
+      if (index === 1) return
       e.stopImmediatePropagation()
-      this.openFileByPage()
-    }, true)
-    // Hold shift and click on the page to broadcast opening this page (notify other clients to open the current page) 按住shift点击页面广播打开本页（通知其他客户端打开当前页面）
-    document.addEventListener('click', e => {
-      if (!e.shiftKey) return
+      this.openFileByPage(e.target as Element, index)
+    }
+    // Hold ctrl and click on the page to open the vscode file (the page component of the current route) 按住ctrl点击页面打开vscode文件（当前路由的页面组件）
+    const onShift = (e: MouseEvent) => {
       const index = this.#getKeyIndex('Shift')
       if (index === -1) return
       e.stopImmediatePropagation()
-      this.broadcastOpenPage()
+      this.broadcastOpenPage(e.target as Element, index)
+    }
+    document.addEventListener('click', e => {
+      if (e.altKey) {
+        onAlt(e)
+      } else if (e.ctrlKey) {
+        onCtr(e)
+      } else if (e.shiftKey) {
+        onShift(e)
+      }
     }, true)
     // Receive broadcast messages from the server (open the specified page) 从服务器接收广播消息（打开指定页面）
     this.ws.addEventListener('message', (res: MessageEvent) => {
@@ -95,12 +99,34 @@ export default class QuicklyOpenFiles {
       if (to !== 'client') return
       if (type !== 'relay-broadcast:openPage') return
       if (document.hidden) return
-      this.#router.push(data).then(() => {
+      const router = this.#getRouter()
+      if (!router) return
+      router.push(data).then(() => {
         console.log(`%cOpened page: %c${data}`, this.#cssBox('#67c23a'), 'font-weight: bold;')
       }).catch(() => {
         console.log(`%cFailed to open page: %c${data}`, this.#cssBox('#f56c6c'), 'font-weight: bold;')
       })
     })
+  }
+  #getRouter(target?: Element): Router | undefined {
+    if (target) {
+      // @ts-ignore
+      return target?.__vnode?.ctx?.appContext?.config?.globalProperties?.$router
+    }
+    // @ts-ignore
+    return document.querySelector('#app')?.__vue_app__?.config?.globalProperties?.$router
+  }
+  #getRouterPaths(target?: Element): string[] {
+    const router = this.#getRouter(target)
+    if (!router) return []
+    const matched = router.currentRoute.value.matched
+    return matched.flatMap(item => {
+      // @ts-ignore
+      let path = item.components?.default?.__file
+      if (!path) return []
+      path = this.#joinRootPath(path)
+      return path ? [path] : []
+    }).reverse()
   }
   /**
    * Get the value of other number keys except the specified key 获取除了指定按键外的其他数字按键值
@@ -150,34 +176,37 @@ export default class QuicklyOpenFiles {
   }
   /**
    * Open the vscode file of the page component of the current route 打开当前路由的页面组件的vscode文件
+   * @param target The selected element 选中的元素
+   * @param index number key value 按的数字键值
    * @returns Opened file path 打开的文件路径
    */
-  openFileByPage = () => {
-    const matched = this.#router.currentRoute.value.matched
-    // @ts-ignore
-    let path: string | undefined = matched[matched.length - 1]?.components?.default?.__file
-    if (!path) {
+  openFileByPage = (target?: Element, index: number = 0) => {
+    const pathList = this.#getRouterPaths(target)
+    if (!pathList.length) {
       console.log('%cNo file path found.', this.#cssBox('#f56c6c'))
       return
     }
-    path = this.#joinRootPath(path)!
-    this.#printLog([path], 0)
-    this.#sendOpenFile(path)
-    return path
+    this.#printLog(pathList, index)
+    this.#sendOpenFile(pathList[index])
+    return [pathList[index], pathList] as const
   }
   /**
    * Broadcast opening this page (notify other clients to open the current page) 广播打开本页（通知其他客户端打开当前页面）
    * @returns Opened page path 打开的页面路径
    */
-  broadcastOpenPage = () => {
-    const path = this.#router.currentRoute.value.fullPath
-    this.#printLog([path], 0)
+  broadcastOpenPage = (target?: Element, index: number = 0) => {
+    const pathList = this.#getRouterPaths(target)
+    if (!pathList.length) {
+      console.log('%cNo file path found.', this.#cssBox('#f56c6c'))
+      return
+    }
+    this.#printLog(pathList, index)
     this.ws.send(JSON.stringify({
       to: 'client',
       type: 'relay-broadcast:openPage',
-      data: path,
+      data: pathList[index],
     }))
-    return path
+    return [pathList[index], pathList] as const
   }
   /**
    * Join the root path with the url 拼接根路径和url
