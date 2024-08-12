@@ -65,6 +65,7 @@ export default class QuicklyOpenFiles {
     document.addEventListener('keyup', e => this.#holdKeys.delete(e.key))
     // Hold alt and click on the element to open the vscode file (the nearest component to which the element belongs) 按住alt点击元素打开vscode文件（元素所属最近的组件）
     const onAlt = (e: MouseEvent) => {
+      if (!e.altKey) return
       const index = this.#getKeyIndex('Alt')
       if (index === -1) return
       e.stopImmediatePropagation()
@@ -72,26 +73,24 @@ export default class QuicklyOpenFiles {
     }
     // Hold ctrl and click on the page to open the vscode file (the page component of the current route) 按住ctrl点击页面打开vscode文件（当前路由的页面组件）
     const onCtr = (e: MouseEvent) => {
+      if (!e.ctrlKey) return
       const index = this.#getKeyIndex('Ctrl')
       if (index === 1) return
       e.stopImmediatePropagation()
       this.openFileByPage(e.target as Element, index)
     }
-    // Hold ctrl and click on the page to open the vscode file (the page component of the current route) 按住ctrl点击页面打开vscode文件（当前路由的页面组件）
+    // Hold shift and click on the page to broadcast opening this page (notify other clients to open the current page) 按住shift点击页面广播打开本页（通知其他客户端打开当前页面）
     const onShift = (e: MouseEvent) => {
+      if (!e.shiftKey) return
       const index = this.#getKeyIndex('Shift')
       if (index === -1) return
       e.stopImmediatePropagation()
       this.broadcastOpenPage(e.target as Element, index)
     }
     document.addEventListener('click', e => {
-      if (e.altKey) {
-        onAlt(e)
-      } else if (e.ctrlKey) {
-        onCtr(e)
-      } else if (e.shiftKey) {
-        onShift(e)
-      }
+      onAlt(e)
+      onCtr(e)
+      onShift(e)
     }, true)
     // Receive broadcast messages from the server (open the specified page) 从服务器接收广播消息（打开指定页面）
     this.ws.addEventListener('message', (res: MessageEvent) => {

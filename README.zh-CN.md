@@ -21,16 +21,26 @@ npm install quickly-open-files_vue
 ```javascript
 import QuicklyOpenFilesVue from 'quickly-open-files_vue'
 
-const router = createRouter({
-  // ...
-})
+new QuicklyOpenFilesVue()
+```
 
-new QuicklyOpenFilesVue(router)
+## 根路径问题
+
+> 默认情况下，组件的__file属性的值是绝对路径，如果不是根路径，需要传入根路径
+
+```javascript
+import QuicklyOpenFilesVue from 'quickly-open-files_vue'
+
+new QuicklyOpenFilesVue({
+  rootPath: QuicklyOpenFilesVue.formatRootPath_importMetaUrl(import.meta.url)
+})
 ```
 
 ## 操作
 
 - 按住alt点击元素打开vscode文件（元素所属最近的组件）
+
+- 按住alt+[1-9]点击元素打开vscode文件（元素所属最近第n个组件）
 
 - 按住ctrl点击页面打开vscode文件（当前路由的页面组件）
 

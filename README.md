@@ -21,16 +21,26 @@ npm install quickly-open-files_vue
 ```javascript
 import QuicklyOpenFilesVue from 'quickly-open-files_vue'
 
-const router = createRouter({
-  // ...
-})
+new QuicklyOpenFilesVue()
+```
 
-new QuicklyOpenFilesVue(router)
+## Root path problem
+
+> By default, the value of the component __file property is an absolute path. If it is not the root path, you need to pass in the root path
+
+```javascript
+import QuicklyOpenFilesVue from 'quickly-open-files_vue'
+
+new QuicklyOpenFilesVue({
+  rootPath: QuicklyOpenFilesVue.formatRootPath_importMetaUrl(import.meta.url)
+})
 ```
 
 ## Operation
 
 - Hold alt and click on the element to open the vscode file (the nearest component to which the element belongs)
+
+- Hold alt+[1-9] and click on the element to open the vscode file (the nth nearest component to which the element belongs)
 
 - Hold ctrl and click on the page to open the vscode file (the page component of the current route)
 
