@@ -68,6 +68,7 @@ export default class QuicklyOpenFiles {
       if (!e.altKey) return
       const index = this.#getKeyIndex('Alt')
       if (index === -1) return
+      e.preventDefault()
       e.stopImmediatePropagation()
       this.openFileByElement(e.target as Element, index)
     }
@@ -76,6 +77,7 @@ export default class QuicklyOpenFiles {
       if (!e.ctrlKey) return
       const index = this.#getKeyIndex('Ctrl')
       if (index === 1) return
+      e.preventDefault()
       e.stopImmediatePropagation()
       this.openFileByPage(e.target as Element, index)
     }
@@ -84,10 +86,11 @@ export default class QuicklyOpenFiles {
       if (!e.shiftKey) return
       const index = this.#getKeyIndex('Shift')
       if (index === -1) return
+      e.preventDefault()
       e.stopImmediatePropagation()
       this.broadcastOpenPage(e.target as Element, index)
     }
-    document.addEventListener('click', e => {
+    document.addEventListener('contextmenu', e => {
       onAlt(e)
       onCtr(e)
       onShift(e)
