@@ -255,7 +255,7 @@ export default class QuicklyOpenFiles {
   #printLog(list: string[], index: number) {
     if (list.length === 0) return
     list = [...list].reverse()
-    const result = `%c${list.join('%c\n%c')}`
+    const result = `%c${list.map((path, index) => `(${list.length - index}) ${path} (${list.length - index})`).join('%c\n%c')}`
     const css = list.flatMap((_, i) => {
       const color = list.length - 1 - i === index ? '#409eff' : '#909399'
       return [`${this.#cssBox(color)}margin-left: ${i}em;`, '']
@@ -265,6 +265,7 @@ export default class QuicklyOpenFiles {
   #cssBox(color: string) {
     return `
       color: #fff;
+      line-break: anywhere;
       background-color: ${color};
       padding: 2px 4px;
       border-radius: 4px;
