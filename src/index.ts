@@ -9,7 +9,9 @@ let isInstantiated = false
 export default class QuicklyOpenFiles {
   ws
   #rootPath = ''
-  #holdKeys = new Set<string>()
+  #holdKeys = new Set<'alt' | 'ctrl' | 'shift'>()
+  #holdCount = 0
+  #holdTarget: Element | null = null
   /**
    * @param port WebSocket port WebSocket 端口
    * @param rootPath root path 根路径
@@ -22,9 +24,11 @@ export default class QuicklyOpenFiles {
       throw new Error('QuicklyOpenFiles has already been instantiated.')
     }
     isInstantiated = true
-    this.#rootPath = this.#formatFilePath(rootPath)
-    if (!this.#rootPath.endsWith('/')) {
-      this.#rootPath += '/'
+    if (rootPath) {
+      this.#rootPath = this.#formatFilePath(rootPath)
+      if (!this.#rootPath.endsWith('/')) {
+        this.#rootPath += '/'
+      }
     }
     this.ws = new ReconnectingWebSocket(`ws://${location.hostname}:${port}/`)
     this.#stopReconnect()
@@ -61,40 +65,28 @@ export default class QuicklyOpenFiles {
   }
   #addListener() {
     // Record the currently held keys 记录当前按住的按键
-    document.addEventListener('keydown', e => this.#holdKeys.add(e.key))
-    document.addEventListener('keyup', e => this.#holdKeys.delete(e.key))
-    // Hold alt and click on the element to open the vscode file (the nearest component to which the element belongs) 按住alt点击元素打开vscode文件（元素所属最近的组件）
-    const onAlt = (e: MouseEvent) => {
-      if (!e.altKey) return
-      const index = this.#getKeyIndex('Alt')
-      if (index === -1) return
-      e.preventDefault()
-      e.stopImmediatePropagation()
-      this.openFileByElement(e.target as Element, index)
-    }
-    // Hold ctrl and click on the page to open the vscode file (the page component of the current route) 按住ctrl点击页面打开vscode文件（当前路由的页面组件）
-    const onCtr = (e: MouseEvent) => {
-      if (!e.ctrlKey) return
-      const index = this.#getKeyIndex('Ctrl')
-      if (index === 1) return
-      e.preventDefault()
-      e.stopImmediatePropagation()
-      this.openFileByPage(e.target as Element, index)
-    }
-    // Hold shift and click on the page to broadcast opening this page (notify other clients to open the current page) 按住shift点击页面广播打开本页（通知其他客户端打开当前页面）
-    const onShift = (e: MouseEvent) => {
-      if (!e.shiftKey) return
-      const index = this.#getKeyIndex('Shift')
-      if (index === -1) return
-      e.preventDefault()
-      e.stopImmediatePropagation()
-      this.broadcastOpenPage(e.target as Element, index)
-    }
     document.addEventListener('contextmenu', e => {
-      onAlt(e)
-      onCtr(e)
-      onShift(e)
+      e.altKey && this.#holdKeys.add('alt')
+      e.ctrlKey && this.#holdKeys.add('ctrl')
+      e.shiftKey && this.#holdKeys.add('shift')
+      if (e.altKey || e.ctrlKey || e.shiftKey) {
+        this.#holdCount++
+        this.#holdTarget = e.target as Element | null
+        e.preventDefault()
+        e.stopImmediatePropagation()
+      }
     }, true)
+    // Clear the record when the key is released and trigger the operation 松开按键时清除记录并触发操作
+    document.addEventListener('keyup', () => {
+      if (this.#holdCount && this.#holdTarget) {
+        this.#holdKeys.has('alt') && this.openFileByElement(this.#holdTarget, this.#holdCount)
+        this.#holdKeys.has('ctrl') && this.openFileByPage(this.#holdTarget, this.#holdCount)
+        this.#holdKeys.has('shift') && this.broadcastOpenPage(this.#holdTarget, this.#holdCount)
+      }
+      this.#holdCount = 0
+      this.#holdKeys.clear()
+      this.#holdTarget = null
+    })
     // Receive broadcast messages from the server (open the specified page) 从服务器接收广播消息（打开指定页面）
     this.ws.addEventListener('message', (res: MessageEvent) => {
       const { to, type, data } = JSON.parse(res.data)
@@ -110,6 +102,11 @@ export default class QuicklyOpenFiles {
       })
     })
   }
+  /**
+   * Get the router instance 获取路由实例
+   * @param target element to find 要查找的元素
+   * @returns router instance 路由实例
+   */
   #getRouter(target?: Element): Router | undefined {
     if (target) {
       // @ts-ignore
@@ -118,6 +115,11 @@ export default class QuicklyOpenFiles {
     // @ts-ignore
     return document.querySelector('#app')?.__vue_app__?.config?.globalProperties?.$router
   }
+  /**
+   * Get the path of the current route 获取当前路由的路径嵌套列表
+   * @param target element to find 要查找的元素
+   * @returns path list 路径列表
+   */
   #getRouterPaths(target?: Element): string[] {
     const router = this.#getRouter(target)
     if (!router) return []
@@ -131,23 +133,13 @@ export default class QuicklyOpenFiles {
     }).reverse()
   }
   /**
-   * Get the value of other number keys except the specified key 获取除了指定按键外的其他数字按键值
-   * @param key specified key 指定的按键
-   * @returns number key value 数字按键值
-   */
-  #getKeyIndex(key: string) {
-    if (this.#holdKeys.size > 2) return -1
-    const index = Number([...this.#holdKeys].find(_key => _key !== key)) || 0
-    if (isNaN(index)) return -1
-    return index
-  }
-  /**
    * Open the vscode file of the nearest component to which the element belongs 打开元素所属最近的组件的vscode文件
    * @param target element to find 要查找的元素
    * @param index number key value 按的数字键值
    * @returns [path, pathList] [路径, 路径列表]
    */
-  openFileByElement = (target: Element, index: number = 0) => {
+  openFileByElement = (target: Element, index: number = 1) => {
+    index--
     const domToVueCtx = (dom: any) => {
       while (dom) {
         const ctx = dom.__vnode?.ctx
@@ -182,7 +174,8 @@ export default class QuicklyOpenFiles {
    * @param index number key value 按的数字键值
    * @returns Opened file path 打开的文件路径
    */
-  openFileByPage = (target?: Element, index: number = 0) => {
+  openFileByPage = (target?: Element, index: number = 1) => {
+    index--
     const pathList = this.#getRouterPaths(target)
     if (!pathList.length) {
       console.log('%cNo file path found.', this.#cssBox('#f56c6c'))
@@ -196,7 +189,8 @@ export default class QuicklyOpenFiles {
    * Broadcast opening this page (notify other clients to open the current page) 广播打开本页（通知其他客户端打开当前页面）
    * @returns Opened page path 打开的页面路径
    */
-  broadcastOpenPage = (target?: Element, index: number = 0) => {
+  broadcastOpenPage = (target?: Element, index: number = 1) => {
+    index--
     const pathList = this.#getRouterPaths(target)
     if (!pathList.length) {
       console.log('%cNo file path found.', this.#cssBox('#f56c6c'))

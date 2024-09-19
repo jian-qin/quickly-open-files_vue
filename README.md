@@ -62,11 +62,11 @@ new QuicklyOpenFilesVue({
 
 - Hold alt and right click on the element to open the vscode file (the nearest component to which the element belongs)
 
-- Hold alt+[1-9] and right click on the element to open the vscode file (the nth nearest component to which the element belongs)
-
 - Hold ctrl and right click on the page to open the vscode file (the page component of the current route)
 
 - Hold shift and right click on the page to broadcast opening this page (notify other clients to open the current page)
+
+- Hold the keyboard and click the right mouse button multiple times. When you release it, open the vscode file of the nth component to which the element belongs/the nth page component of the nested route
 
 ## API
 
