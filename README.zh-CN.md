@@ -24,17 +24,25 @@ import QuicklyOpenFilesVue from 'quickly-open-files_vue'
 new QuicklyOpenFilesVue()
 ```
 
+## 配置
+
+```javascript
+new QuicklyOpenFilesVue({
+  port: 4444, // 端口
+  openUrl: false, // 如果连接关闭了就使用使用URL打开VSCode
+  rootPath: '', // 根路径
+})
+```
+
 ## 根路径问题
 
-> 默认情况下，组件的__file属性的值是绝对路径，如果不是根路径，需要传入根路径
+> 默认情况下，组件的__file属性的值是绝对路径，如果不是根路径，则需要传入根路径
 
 ```javascript
 // vue.config.js
 process.env.VUE_APP_ROOTPATH = __dirname
 
 // main.js
-import QuicklyOpenFilesVue from 'quickly-open-files_vue'
-
 new QuicklyOpenFilesVue({
   rootPath: process.env.VUE_APP_ROOTPATH
 })
@@ -51,8 +59,6 @@ export default defineConfig({
 })
 
 // main.js
-import QuicklyOpenFilesVue from 'quickly-open-files_vue'
-
 new QuicklyOpenFilesVue({
   rootPath: import.meta.env.VITE_ROOTPATH
 })

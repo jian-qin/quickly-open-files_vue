@@ -8,6 +8,7 @@ let isInstantiated = false
 
 export default class QuicklyOpenFiles {
   ws
+  #openUrl = false
   #rootPath = ''
   #holdKeys = new Set<'alt' | 'ctrl' | 'shift'>()
   #holdCount = 0
@@ -18,12 +19,14 @@ export default class QuicklyOpenFiles {
    */
   constructor({
     port = 4444,
-    rootPath = ''
+    openUrl = false,
+    rootPath = '',
   } = {}) {
     if (isInstantiated) {
       throw new Error('QuicklyOpenFiles has already been instantiated.')
     }
     isInstantiated = true
+    this.#openUrl = openUrl
     if (rootPath) {
       this.#rootPath = this.#formatFilePath(rootPath)
       if (!this.#rootPath.endsWith('/')) {
@@ -228,6 +231,14 @@ export default class QuicklyOpenFiles {
   #sendOpenFile(path?: string) {
     if (!path) {
       console.log('%cNo file path found.', this.#cssBox('#f56c6c'))
+      return
+    }
+    // If the connection is closed, use the URL to open VSCode 如果连接关闭了就使用使用URL打开VSCode
+    if (this.ws.readyState === WebSocket.CLOSED && this.#openUrl) {
+      if (!path.startsWith('/')) {
+        path = '/' + path
+      }
+      window.open(`vscode://file${path}`)
       return
     }
     this.ws.send(JSON.stringify({

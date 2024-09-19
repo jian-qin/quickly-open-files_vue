@@ -24,6 +24,16 @@ import QuicklyOpenFilesVue from 'quickly-open-files_vue'
 new QuicklyOpenFilesVue()
 ```
 
+## Configuration
+
+```javascript
+new QuicklyOpenFilesVue({
+  port: 4444, // Port
+  openUrl: false, // If the connection is closed, use the URL to open VSCode
+  rootPath: '', // Root path
+})
+```
+
 ## Root path problem
 
 > By default, the value of the component __file property is an absolute path. If it is not the root path, you need to pass in the root path
@@ -33,8 +43,6 @@ new QuicklyOpenFilesVue()
 process.env.VUE_APP_ROOTPATH = __dirname
 
 // main.js
-import QuicklyOpenFilesVue from 'quickly-open-files_vue'
-
 new QuicklyOpenFilesVue({
   rootPath: process.env.VUE_APP_ROOTPATH
 })
@@ -51,8 +59,6 @@ export default defineConfig({
 })
 
 // main.js
-import QuicklyOpenFilesVue from 'quickly-open-files_vue'
-
 new QuicklyOpenFilesVue({
   rootPath: import.meta.env.VITE_ROOTPATH
 })
