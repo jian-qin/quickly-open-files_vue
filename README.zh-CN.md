@@ -29,10 +29,32 @@ new QuicklyOpenFilesVue()
 > 默认情况下，组件的__file属性的值是绝对路径，如果不是根路径，需要传入根路径
 
 ```javascript
+// vue.config.js
+process.env.VUE_APP_ROOTPATH = __dirname
+
+// main.js
 import QuicklyOpenFilesVue from 'quickly-open-files_vue'
 
 new QuicklyOpenFilesVue({
-  rootPath: QuicklyOpenFilesVue.formatRootPath_importMetaUrl(import.meta.url)
+  rootPath: process.env.VUE_APP_ROOTPATH
+})
+
+// or
+
+// vite.config.js
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  define: {
+    'import.meta.env.VITE_ROOTPATH': JSON.stringify(__dirname)
+  }
+})
+
+// main.js
+import QuicklyOpenFilesVue from 'quickly-open-files_vue'
+
+new QuicklyOpenFilesVue({
+  rootPath: import.meta.env.VITE_ROOTPATH
 })
 ```
 

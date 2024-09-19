@@ -8,19 +8,8 @@ let isInstantiated = false
 
 export default class QuicklyOpenFiles {
   ws
-  #rootPath
+  #rootPath = ''
   #holdKeys = new Set<string>()
-  /**
-   * Format rootPath-import.meta.url 格式化根路径-import.meta.url
-   * @param url import.meta.url
-   */
-  static formatRootPath_importMetaUrl(url: string) {
-    const _url = url.match(/[/|\\](\w+:[/|\\]\w+.+?[/|\\])src[/|\\]/)?.[1]
-    if (!_url) {
-      throw new Error('The root path could not be found.')
-    }
-    return decodeURI(_url)
-  }
   /**
    * @param port WebSocket port WebSocket 端口
    * @param rootPath root path 根路径
@@ -33,11 +22,22 @@ export default class QuicklyOpenFiles {
       throw new Error('QuicklyOpenFiles has already been instantiated.')
     }
     isInstantiated = true
-    this.#rootPath = rootPath
+    this.#rootPath = this.#formatFilePath(rootPath)
+    if (!this.#rootPath.endsWith('/')) {
+      this.#rootPath += '/'
+    }
     this.ws = new ReconnectingWebSocket(`ws://${location.hostname}:${port}/`)
     this.#stopReconnect()
     this.#addListener()
     this.#mountWindowMethod()
+  }
+  /**
+   * Format file path (unify slashes, uppercase drive letter, remove slashes before drive letter) 格式化文件路径（统一斜杠、大小写盘符、去除盘符前的斜杠）
+   * @param path file path 文件路径
+   * @returns formatted file path 格式化后的文件路径
+   */
+  #formatFilePath(path: string) {
+    return path.replace(/\\/g, '/').replace(/^\/([a-z]:)/, '$1').replace(/^[a-z]:/, $0 => $0.toUpperCase())
   }
   /**
    * Determine to stop reconnecting 判断停止重连
@@ -154,7 +154,7 @@ export default class QuicklyOpenFiles {
         if (ctx) {
           return ctx
         } else {
-          dom = dom.parentElement
+          dom = dom.parentNode
         }
       }
     }
@@ -215,13 +215,14 @@ export default class QuicklyOpenFiles {
    * @param url url to join 要拼接的url
    */
   #joinRootPath(url: string) {
-    if (/^[/|\\]?\w+:/.test(url)) {
+    url = this.#formatFilePath(url)
+    if (url.startsWith(this.#rootPath)) {
       return url
     }
-    if (!/^[/|\\]?src[/|\\]/.test(url)) {
+    if (!url.includes('/')) {
       return null
     }
-    if (['/', '\\'].includes(url[0])) {
+    if (url.startsWith('/')) {
       url = url.slice(1)
     }
     return this.#rootPath + url

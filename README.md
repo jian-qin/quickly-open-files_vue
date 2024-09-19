@@ -29,10 +29,32 @@ new QuicklyOpenFilesVue()
 > By default, the value of the component __file property is an absolute path. If it is not the root path, you need to pass in the root path
 
 ```javascript
+// vue.config.js
+process.env.VUE_APP_ROOTPATH = __dirname
+
+// main.js
 import QuicklyOpenFilesVue from 'quickly-open-files_vue'
 
 new QuicklyOpenFilesVue({
-  rootPath: QuicklyOpenFilesVue.formatRootPath_importMetaUrl(import.meta.url)
+  rootPath: process.env.VUE_APP_ROOTPATH
+})
+
+// or
+
+// vite.config.js
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  define: {
+    'import.meta.env.VITE_ROOTPATH': JSON.stringify(__dirname)
+  }
+})
+
+// main.js
+import QuicklyOpenFilesVue from 'quickly-open-files_vue'
+
+new QuicklyOpenFilesVue({
+  rootPath: import.meta.env.VITE_ROOTPATH
 })
 ```
 
