@@ -112,8 +112,7 @@ export default class QuicklyOpenFiles {
    */
   #getRouter(target?: Element): Router | undefined {
     if (target) {
-      // @ts-ignore
-      return target?.__vnode?.ctx?.appContext?.config?.globalProperties?.$router
+      return this.#domToVueCtx(target)?.appContext?.config?.globalProperties?.$router
     }
     // @ts-ignore
     return document.querySelector('#app')?.__vue_app__?.config?.globalProperties?.$router
@@ -136,6 +135,21 @@ export default class QuicklyOpenFiles {
     }).reverse()
   }
   /**
+   * Get the Vue instance of the nearest component to which the element belongs 获取元素所属最近的组件的Vue实例
+   * @param dom element to find 要查找的元素
+   * @returns Vue instance Vue实例
+   */
+  #domToVueCtx(dom: any) {
+    while (dom) {
+      const ctx = dom.__vnode?.ctx
+      if (ctx) {
+        return ctx
+      } else {
+        dom = dom.parentNode
+      }
+    }
+  }
+  /**
    * Open the vscode file of the nearest component to which the element belongs 打开元素所属最近的组件的vscode文件
    * @param target element to find 要查找的元素
    * @param index number key value 按的数字键值
@@ -143,16 +157,6 @@ export default class QuicklyOpenFiles {
    */
   openFileByElement = (target: Element, index: number = 1) => {
     index--
-    const domToVueCtx = (dom: any) => {
-      while (dom) {
-        const ctx = dom.__vnode?.ctx
-        if (ctx) {
-          return ctx
-        } else {
-          dom = dom.parentNode
-        }
-      }
-    }
     const getPathList = (ctx: any) => {
       const result: string[] = []
       while (ctx) {
@@ -165,7 +169,7 @@ export default class QuicklyOpenFiles {
       }
       return result
     }
-    const vueCtx = domToVueCtx(target)
+    const vueCtx = this.#domToVueCtx(target)
     const pathList = getPathList(vueCtx)
     this.#printLog(pathList, index)
     this.#sendOpenFile(pathList[index])
