@@ -1,5 +1,5 @@
 import ReconnectingWebSocket from 'reconnecting-websocket'
-import type { Router } from 'vue-router'
+import type { Router, RouteLocationMatched } from 'vue-router'
 
 /**
  * Prevent multiple instantiations 防止多次实例化
@@ -9,17 +9,21 @@ let isInstantiated = false
 export default class QuicklyOpenFiles {
   ws
   #openUrl = false
+  #sourcePath: string | RegExp = ''
   #rootPath = ''
   #holdKeys = new Set<'alt' | 'ctrl' | 'shift'>()
   #holdCount = 0
   #holdTarget: Element | null = null
   /**
    * @param port WebSocket port WebSocket 端口
+   * @param openUrl Whether to enable the backup function of opening VSCode with URL 是否启用URL打开VSCode的备用功能
+   * @param sourcePath Source code directory 源码目录
    * @param rootPath root path 根路径
    */
   constructor({
     port = 4444,
     openUrl = false,
+    sourcePath = 'src/',
     rootPath = '',
   } = {}) {
     if (isInstantiated) {
@@ -27,6 +31,7 @@ export default class QuicklyOpenFiles {
     }
     isInstantiated = true
     this.#openUrl = openUrl
+    this.#sourcePath = sourcePath
     if (rootPath) {
       this.#rootPath = this.#formatFilePath(rootPath)
       if (!this.#rootPath.endsWith('/')) {
@@ -66,6 +71,9 @@ export default class QuicklyOpenFiles {
       broadcastOpenPage: this.broadcastOpenPage,
     }
   }
+  /**
+   * Add event listener 添加事件监听
+   */
   #addListener() {
     // Record the currently held keys 记录当前按住的按键
     document.addEventListener('contextmenu', e => {
@@ -111,11 +119,20 @@ export default class QuicklyOpenFiles {
    * @returns router instance 路由实例
    */
   #getRouter(target?: Element): Router | undefined {
-    if (target) {
-      return this.#domToVueCtx(target)?.appContext?.config?.globalProperties?.$router
+    const vueVersion = this.#getVueVersion(target)
+    if (vueVersion === '3') {
+      if (target) {
+        return this.#domToVueCtx(target)?.appContext.config.globalProperties.$router
+      }
+      // @ts-ignore
+      return document.querySelector('#app')?.__vue_app__.config.globalProperties.$router
+    } else if (vueVersion === '2') {
+      if (target) {
+        return this.#domToVueCtx(target)?.$router
+      }
+      // @ts-ignore
+      return document.querySelector('#app')?.__vue__.$router
     }
-    // @ts-ignore
-    return document.querySelector('#app')?.__vue_app__?.config?.globalProperties?.$router
   }
   /**
    * Get the path of the current route 获取当前路由的路径嵌套列表
@@ -125,7 +142,14 @@ export default class QuicklyOpenFiles {
   #getRouterPaths(target?: Element): string[] {
     const router = this.#getRouter(target)
     if (!router) return []
-    const matched = router.currentRoute.value.matched
+    const vueVersion = this.#getVueVersion(target)
+    let matched: RouteLocationMatched[] = []
+    if (vueVersion === '3') {
+      matched = router.currentRoute.value.matched
+    } else if (vueVersion === '2') {
+      // @ts-ignore
+      matched = router.currentRoute.matched
+    }
     return matched.flatMap(item => {
       // @ts-ignore
       let path = item.components?.default?.__file
@@ -140,8 +164,12 @@ export default class QuicklyOpenFiles {
    * @returns Vue instance Vue实例
    */
   #domToVueCtx(dom: any) {
+    const getCtx = {
+      2: (dom: any) => dom.__vue__,
+      3: (dom: any) => dom.__vnode?.ctx,
+    }[this.#getVueVersion(dom) as '2' | '3']
     while (dom) {
-      const ctx = dom.__vnode?.ctx
+      const ctx = getCtx(dom)
       if (ctx) {
         return ctx
       } else {
@@ -157,15 +185,25 @@ export default class QuicklyOpenFiles {
    */
   openFileByElement = (target: Element, index: number = 1) => {
     index--
+    const vueVersion = this.#getVueVersion(target)
+    if (!vueVersion) return
     const getPathList = (ctx: any) => {
       const result: string[] = []
-      while (ctx) {
-        const path = ctx.type?.__file
-        if (path) {
-          const _path = this.#joinRootPath(path)
-          _path && result.push(_path)
+      const pushPath = (path?: string) => {
+        if (!path) return
+        const _path = this.#joinRootPath(path)
+        _path && result.push(_path)
+      }
+      if (vueVersion === '3') {
+        while (ctx) {
+          pushPath(ctx.type?.__file)
+          ctx = ctx.parent
         }
-        ctx = ctx.parent
+      } else if (vueVersion === '2') {
+        while (ctx) {
+          pushPath(ctx.$options?.__file)
+          ctx = ctx.$parent
+        }
       }
       return result
     }
@@ -183,6 +221,7 @@ export default class QuicklyOpenFiles {
    */
   openFileByPage = (target?: Element, index: number = 1) => {
     index--
+    if (!this.#getVueVersion(target)) return
     const pathList = this.#getRouterPaths(target)
     if (!pathList.length) {
       console.log('%cNo file path found.', this.#cssBox('#f56c6c'))
@@ -198,6 +237,7 @@ export default class QuicklyOpenFiles {
    */
   broadcastOpenPage = (target?: Element, index: number = 1) => {
     index--
+    if (!this.#getVueVersion(target)) return
     const pathList = this.#getRouterPaths(target)
     if (!pathList.length) {
       console.log('%cNo file path found.', this.#cssBox('#f56c6c'))
@@ -212,19 +252,51 @@ export default class QuicklyOpenFiles {
     return [pathList[index], pathList] as const
   }
   /**
+   * 获取vue版本
+   * @param dom element to find 要查找的元素
+   * @returns vue版本
+   */
+  #getVueVersion(dom?: any): '2' | '3' | undefined {
+    while (dom) {
+      if (dom.__vnode) {
+        return '3'
+      } else if (dom.__vue__) {
+        return '2'
+      } else {
+        dom = dom.parentNode
+      }
+    }
+    const root: any = document.querySelector('#app')
+    if (!root) return
+    if (root.__vue_app__) {
+      return '3'
+    } else if (root.__vue__) {
+      return '2'
+    }
+  }
+  /**
    * Join the root path with the url 拼接根路径和url
    * @param url url to join 要拼接的url
    */
   #joinRootPath(url: string) {
     url = this.#formatFilePath(url)
-    if (url.startsWith(this.#rootPath)) {
+    // If the url starts with a slash, it is an absolute path 如果url以斜杠开头，就是绝对路径
+    if (url.startsWith('/')) {
       return url
     }
-    if (!url.includes('/')) {
-      return null
+    // If it is a Windows path, return directly 如果是Windows路径，直接返回
+    if (/^[A-Z]:/.test(url)) {
+      return url
     }
-    if (url.startsWith('/')) {
-      url = url.slice(1)
+    // Filter out file paths that are not in the source code directory 过滤掉不在源码目录的文件路径
+    if (typeof this.#sourcePath === 'string') {
+      if (!url.startsWith(this.#sourcePath)) {
+        return null
+      }
+    } else {
+      if (!this.#sourcePath.test(url)) {
+        return null
+      }
     }
     return this.#rootPath + url
   }

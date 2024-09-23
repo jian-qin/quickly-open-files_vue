@@ -2,19 +2,33 @@
 
 English | [简体中文](./README.zh-CN.md)
 
-**Note: Not yet compatible with MacOS**
+> Quickly open files in VSCode by right-clicking on elements on the page
 
-> Dependency of vscode plugin 'Quickly open files'
+## Compatibility
 
-## Install vscode plugin
+- Vue2、Vue3
 
-[Quickly open files](https://marketplace.visualstudio.com/items?itemName=jian-qin.quickly-open-files)
+## Start (2 choose 1)
 
-## Install
+1. (Recommended) Download and install the Chrome extension [Quickly open files](https://github.com/jian-qin/quickly-open-files_vue/releases)
+
+    ```javascript
+    // Configure in the project
+    window.__DEV__ROOTPATH // Root path (optional)
+    window.__DEV__SOURCEPATH, // Source code directory (optional)
+    ```
+
+2. Install the npm package in the project
 
 ```bash
 npm install quickly-open-files_vue
 ```
+
+## Install VSCode extension
+
+- If you haven't installed the vscode extension [Quickly open files](https://marketplace.visualstudio.com/items?itemName=jian-qin.quickly-open-files), please enable the openUrl option
+
+- The method of opening files through URL cannot distinguish windows. If there are multiple windows, it may open in the wrong window. It is recommended to install the vscode extension
 
 ## Usage
 
@@ -29,7 +43,8 @@ new QuicklyOpenFilesVue()
 ```javascript
 new QuicklyOpenFilesVue({
   port: 4444, // Port
-  openUrl: false, // If the connection is closed, use the URL to open VSCode
+  openUrl: false, // Whether to enable the backup function of opening VSCode with URL
+  sourcePath: 'src/', // Source code directory
   rootPath: '', // Root path
 })
 ```
