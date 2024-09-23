@@ -15,7 +15,7 @@
 ```javascript
 // 在项目中配置
 window.__DEV__ROOTPATH // 根路径（可选）
-window.__DEV__SOURCEPATH, // 源码目录（可选）
+window.__DEV__SOURCEPATH // 源码目录（可选）
 ```
 
 2. 在项目中安装npm包

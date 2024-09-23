@@ -12,11 +12,11 @@ English | [简体中文](./README.zh-CN.md)
 
 1. (Recommended) Download and install the Chrome extension [Quickly open files](https://github.com/jian-qin/quickly-open-files_vue/releases)
 
-    ```javascript
-    // Configure in the project
-    window.__DEV__ROOTPATH // Root path (optional)
-    window.__DEV__SOURCEPATH, // Source code directory (optional)
-    ```
+```javascript
+// Configure in the project
+window.__DEV__ROOTPATH // Root path (optional)
+window.__DEV__SOURCEPATH // Source code directory (optional)
+```
 
 2. Install the npm package in the project
 
