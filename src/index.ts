@@ -9,7 +9,8 @@ let isInstantiated = false
 export default class QuicklyOpenFiles {
   ws
   #openUrl = false
-  #sourcePath: string | RegExp = ''
+  #sourcePath
+  #eventKey
   #rootPath = ''
   #holdKeys = new Set<'alt' | 'ctrl' | 'shift'>()
   #holdCount = 0
@@ -18,12 +19,14 @@ export default class QuicklyOpenFiles {
    * @param port WebSocket port WebSocket 端口
    * @param openUrl Whether to enable the backup function of opening VSCode with URL 是否启用URL打开VSCode的备用功能
    * @param sourcePath Source code directory 源码目录
+   * @param eventKey Mouse button 鼠标按键
    * @param rootPath root path 根路径
    */
   constructor({
     port = 4444,
     openUrl = false,
-    sourcePath = 'src/',
+    sourcePath = 'src/' as string | RegExp,
+    eventKey = 'left' as 'left' | 'right',
     rootPath = '',
   } = {}) {
     if (isInstantiated) {
@@ -32,6 +35,7 @@ export default class QuicklyOpenFiles {
     isInstantiated = true
     this.#openUrl = openUrl
     this.#sourcePath = sourcePath
+    this.#eventKey = eventKey
     if (rootPath) {
       this.#rootPath = this.#formatFilePath(rootPath)
       if (!this.#rootPath.endsWith('/')) {
@@ -76,7 +80,8 @@ export default class QuicklyOpenFiles {
    */
   #addListener() {
     // Record the currently held keys 记录当前按住的按键
-    document.addEventListener('contextmenu', e => {
+    const event = { left: 'click', right: 'contextmenu' }[this.#eventKey] as 'click' | 'contextmenu'
+    document.addEventListener(event, e => {
       e.altKey && this.#holdKeys.add('alt')
       e.ctrlKey && this.#holdKeys.add('ctrl')
       e.shiftKey && this.#holdKeys.add('shift')

@@ -45,6 +45,7 @@ new QuicklyOpenFilesVue({
   port: 4444, // Port
   openUrl: false, // Whether to enable the backup function of opening VSCode with URL
   sourcePath: 'src/', // Source code directory
+  eventKey: 'left', // Mouse button
   rootPath: '', // Root path
 })
 ```
@@ -81,13 +82,13 @@ new QuicklyOpenFilesVue({
 
 ## Operation
 
-- Hold alt and right click on the element to open the vscode file (the nearest component to which the element belongs)
+- Hold alt and click the left/right mouse button on the element to open the vscode file (the nearest component to which the element belongs)
 
-- Hold ctrl and right click on the page to open the vscode file (the page component of the current route)
+- Hold ctrl and click the left/right mouse button to open the vscode file of the current page (the page component of the current route)
 
-- Hold shift and right click on the page to broadcast opening this page (notify other clients to open the current page)
+- Hold shift and click the left/right mouse button to broadcast opening this page (notify other clients to open the current page)
 
-- Hold the keyboard and click the right mouse button multiple times. When you release it, open the vscode file of the nth component to which the element belongs/the nth page component of the nested route
+- Hold the keyboard and click the mouse multiple times, and release to open the vscode file of the nth component to which the element belongs/the nth page component of the nested route
 
 ## API
 

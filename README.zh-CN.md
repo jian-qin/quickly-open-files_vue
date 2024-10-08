@@ -45,6 +45,7 @@ new QuicklyOpenFilesVue({
   port: 4444, // 端口
   openUrl: false, // 是否启用URL打开VSCode的备用功能
   sourcePath: 'src/', // 源码目录
+  eventKey: 'left', // 鼠标按键
   rootPath: '', // 根路径
 })
 ```
@@ -81,13 +82,13 @@ new QuicklyOpenFilesVue({
 
 ## 操作
 
-- 按住alt右键元素打开vscode文件（元素所属最近的组件）
+- 按住alt+鼠标左/右键，点击元素打开vscode文件（元素所属最近的组件）
 
-- 按住ctrl右键页面打开vscode文件（当前路由的页面组件）
+- 按住ctrl+鼠标左/右键，当前页面打开vscode文件（当前路由的页面组件）
 
-- 按住shift右键页面广播打开本页（通知其他客户端打开当前页面）
+- 按住shift+鼠标左/右键，当前页面广播打开本页（通知其他客户端打开当前页面）
 
-- 按住键盘多次点击鼠标右键，松开时打开元素所属的第n个组件/嵌套路由的第n个页面组件的vscode文件
+- 按住键盘多次点击鼠标，松开时打开元素所属的第n个组件/嵌套路由的第n个页面组件的vscode文件
 
 ## API
 
