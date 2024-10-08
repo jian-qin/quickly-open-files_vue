@@ -15,7 +15,6 @@ English | [简体中文](./README.zh-CN.md)
 ```javascript
 // Configure in the project
 window.__DEV__ROOTPATH // Root path (optional)
-window.__DEV__SOURCEPATH // Source code directory (optional)
 ```
 
 2. Install the npm package in the project
