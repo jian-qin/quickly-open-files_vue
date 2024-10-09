@@ -2,7 +2,7 @@
 
 [English](./README.md) | 简体中文
 
-> 通过右键点击页面上的元素，快速在VSCode中打开对应的文件
+> 通过鼠标点击页面上的元素，快速在VSCode中打开对应的文件
 
 ## 兼容
 
@@ -14,7 +14,9 @@
 
 ```javascript
 // 在项目中配置
-window.__DEV__ROOTPATH // 根路径（可选）
+window.__QuicklyOpenFiles_option = {
+  // ...
+}
 ```
 
 2. 在项目中安装npm包
@@ -114,10 +116,10 @@ function broadcastOpenPage () {
 ## 在控制台中使用
 
 ```javascript
-window.__VSCode.openFileByElement(document.querySelector('.demo'))
-window.__VSCode.openFileByElement($0)
+window.__QuicklyOpenFiles_api.openFileByElement(document.querySelector('.demo'))
+window.__QuicklyOpenFiles_api.openFileByElement($0)
 
-window.__VSCode.openFileByPage()
+window.__QuicklyOpenFiles_api.openFileByPage()
 
-window.__VSCode.broadcastOpenPage()
+window.__QuicklyOpenFiles_api.broadcastOpenPage()
 ```

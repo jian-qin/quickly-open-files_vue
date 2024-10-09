@@ -2,7 +2,7 @@
 
 English | [简体中文](./README.zh-CN.md)
 
-> Quickly open files in VSCode by right-clicking on elements on the page
+> Quickly open the corresponding file in VSCode by clicking on the element on the page
 
 ## Compatibility
 
@@ -14,7 +14,9 @@ English | [简体中文](./README.zh-CN.md)
 
 ```javascript
 // Configure in the project
-window.__DEV__ROOTPATH // Root path (optional)
+window.__QuicklyOpenFiles_option = {
+  // ...
+}
 ```
 
 2. Install the npm package in the project
@@ -114,10 +116,10 @@ function broadcastOpenPage () {
 ## Use in the console
 
 ```javascript
-window.__VSCode.openFileByElement(document.querySelector('.demo'))
-window.__VSCode.openFileByElement($0)
+window.__QuicklyOpenFiles_api.openFileByElement(document.querySelector('.demo'))
+window.__QuicklyOpenFiles_api.openFileByElement($0)
 
-window.__VSCode.openFileByPage()
+window.__QuicklyOpenFiles_api.openFileByPage()
 
-window.__VSCode.broadcastOpenPage()
+window.__QuicklyOpenFiles_api.broadcastOpenPage()
 ```

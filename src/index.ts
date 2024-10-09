@@ -73,7 +73,7 @@ export default class QuicklyOpenFiles {
    */
   #mountWindowMethod() {
     // @ts-ignore
-    self.__VSCode = {
+    self.__QuicklyOpenFiles_api = {
       openFileByElement: this.openFileByElement,
       openFileByPage: this.openFileByPage,
       broadcastOpenPage: this.broadcastOpenPage,
