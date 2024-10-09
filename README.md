@@ -42,6 +42,7 @@ new QuicklyOpenFilesVue()
 ```javascript
 new QuicklyOpenFilesVue({
   port: 4444, // Port
+  rootEl: '#app', // Root element selector
   openUrl: false, // Whether to enable the backup function of opening VSCode with URL
   sourcePath: 'src/', // Source code directory
   eventKey: 'left', // Mouse button

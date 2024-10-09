@@ -9,6 +9,7 @@ let isInstantiated = false
 export default class QuicklyOpenFiles {
   ws
   #openUrl = false
+  #rootEl
   #sourcePath
   #eventKey
   #rootPath = ''
@@ -17,6 +18,7 @@ export default class QuicklyOpenFiles {
   #holdTarget: Element | null = null
   /**
    * @param port WebSocket port WebSocket 端口
+   * @param rootEl Root element selector 根元素选择器
    * @param openUrl Whether to enable the backup function of opening VSCode with URL 是否启用URL打开VSCode的备用功能
    * @param sourcePath Source code directory 源码目录
    * @param eventKey Mouse button 鼠标按键
@@ -25,6 +27,7 @@ export default class QuicklyOpenFiles {
   constructor({
     port = 4444,
     openUrl = false,
+    rootEl = '#app',
     sourcePath = 'src/' as string | RegExp,
     eventKey = 'left' as 'left' | 'right',
     rootPath = '',
@@ -34,6 +37,7 @@ export default class QuicklyOpenFiles {
     }
     isInstantiated = true
     this.#openUrl = openUrl
+    this.#rootEl = rootEl
     this.#sourcePath = sourcePath
     this.#eventKey = eventKey
     if (rootPath) {
@@ -53,7 +57,7 @@ export default class QuicklyOpenFiles {
    * @returns formatted file path 格式化后的文件路径
    */
   #formatFilePath(path: string) {
-    return path.replace(/\\/g, '/').replace(/^\/([a-z]:)/, '$1').replace(/^[a-z]:/, $0 => $0.toUpperCase())
+    return path.replace(/\\/g, '/').replace(/^\/([a-zA-Z]:)/, '$1').replace(/^[a-z]:/, $0 => $0.toUpperCase())
   }
   /**
    * Determine to stop reconnecting 判断停止重连
@@ -130,13 +134,13 @@ export default class QuicklyOpenFiles {
         return this.#domToVueCtx(target)?.appContext.config.globalProperties.$router
       }
       // @ts-ignore
-      return document.querySelector('#app')?.__vue_app__.config.globalProperties.$router
+      return document.querySelector(this.#rootEl)?.__vue_app__.config.globalProperties.$router
     } else if (vueVersion === '2') {
       if (target) {
         return this.#domToVueCtx(target)?.$router
       }
       // @ts-ignore
-      return document.querySelector('#app')?.__vue__.$router
+      return document.querySelector(this.#rootEl)?.__vue__.$router
     }
   }
   /**
@@ -271,7 +275,7 @@ export default class QuicklyOpenFiles {
         dom = dom.parentNode
       }
     }
-    const root: any = document.querySelector('#app')
+    const root: any = document.querySelector(this.#rootEl)
     if (!root) return
     if (root.__vue_app__) {
       return '3'
@@ -290,7 +294,7 @@ export default class QuicklyOpenFiles {
       return url
     }
     // If it is a Windows path, return directly 如果是Windows路径，直接返回
-    if (/^[A-Z]:/.test(url)) {
+    if (/^[a-zA-Z]:/.test(url)) {
       return url
     }
     // Filter out file paths that are not in the source code directory 过滤掉不在源码目录的文件路径

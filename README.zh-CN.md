@@ -42,6 +42,7 @@ new QuicklyOpenFilesVue()
 ```javascript
 new QuicklyOpenFilesVue({
   port: 4444, // 端口
+  rootEl: '#app', // 根元素选择器
   openUrl: false, // 是否启用URL打开VSCode的备用功能
   sourcePath: 'src/', // 源码目录
   eventKey: 'left', // 鼠标按键
