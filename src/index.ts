@@ -74,6 +74,7 @@ export default class QuicklyOpenFiles {
   #mountWindowMethod() {
     // @ts-ignore
     self.__QuicklyOpenFiles_api = {
+      ws: this.ws,
       openFileByElement: this.openFileByElement,
       openFileByPage: this.openFileByPage,
       broadcastOpenPage: this.broadcastOpenPage,
@@ -208,6 +209,17 @@ export default class QuicklyOpenFiles {
           pushPath(ctx.type?.__file)
           ctx = ctx.parent
         }
+        let dom: any = target
+        while (dom) {
+          const path = this.#joinRootPath(dom.__vnode?.ctx?.type?.__file || '') || ''
+          const index = result.indexOf(path)
+          if (index !== -1) {
+            try {
+              result[index] += dom.__vnode.props.__v_inspector.match(/:\d+:\d+$/)[0] || ''
+            } catch {}
+          }
+          dom = dom.parentNode
+        }
       } else if (vueVersion === '2') {
         while (ctx) {
           pushPath(ctx.$options?.__file)
@@ -339,7 +351,8 @@ export default class QuicklyOpenFiles {
    */
   #printLog(list: string[], index: number) {
     if (list.length === 0) return
-    list = [...list].reverse()
+    const reg = /:\d+:\d+$/
+    list = [...list].reverse().map(path => path.replace(reg, ' $&'))
     const result = `%c${list.map((path, index) => `(${list.length - index}) ${path} (${list.length - index})`).join('%c\n%c')}`
     const css = list.flatMap((_, i) => {
       const color = list.length - 1 - i === index ? '#409eff' : '#909399'
