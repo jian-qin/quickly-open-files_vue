@@ -100,9 +100,10 @@ export default class QuicklyOpenFiles {
     // Clear the record when the key is released and trigger the operation 松开按键时清除记录并触发操作
     document.addEventListener('keyup', () => {
       if (this.#holdCount && this.#holdTarget) {
+        const target = this.#holdTarget === document.documentElement ? undefined : this.#holdTarget
         this.#holdKeys.has('alt') && this.openFileByElement(this.#holdTarget, this.#holdCount)
-        this.#holdKeys.has('ctrl') && this.openFileByPage(this.#holdTarget, this.#holdCount)
-        this.#holdKeys.has('shift') && this.broadcastOpenPage(this.#holdTarget, this.#holdCount)
+        this.#holdKeys.has('ctrl') && this.openFileByPage(target, this.#holdCount)
+        this.#holdKeys.has('shift') && this.broadcastOpenPage(target, this.#holdCount)
       }
       this.#holdCount = 0
       this.#holdKeys.clear()
